@@ -1,0 +1,28 @@
+{
+  "ar": {
+    "home": {
+      "title": "زكاتي",
+      "desc": "تطبيق يساعدك في حساب الزكاة، التذكير بموعدها، واختيار جهات توزيع موثوقة. سهولة في الإدارة ودقة في الحسابات."
+    },
+    "navbar": {
+      "home": "الرئيسية",
+      "calculator": "حاسبة الزكاة",
+      "reminder": "التذكير",
+      "distribution": "التوزيع",
+      "lang": "English"
+    }
+  },
+  "en": {
+    "home": {
+      "title": "Zakat Reminder",
+      "desc": "Zakat Reminder helps you calculate your zakat, set reminders for your zakat due date, and find trusted organizations for zakat distribution. Easily manage your annual zakat with accurate calculations, countdowns, and donation options—all in one place."
+    },
+    "navbar": {
+      "home": "Home",
+      "calculator": "Calculator",
+      "reminder": "Reminder",
+      "distribution": "Distribution",
+      "lang": "العربية"
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLang } from './lang';
 
 interface StockInput {
   name: string;
@@ -52,6 +53,61 @@ export default function Calculator() {
   });
   const [errors, setErrors] = useState<CalculatorErrors>({});
   const [result, setResult] = useState<ZakatResult | null>(null);
+  const lang = useLang();
+
+  // AR/EN labels
+  const t = {
+    ar: {
+      title: 'حاسبة الزكاة',
+      cash: 'النقد (بالعملة المحلية)',
+      business: 'قيمة البضائع التجارية',
+      goldWeight: 'وزن الذهب/الفضة (غرام)',
+      goldPrice: 'سعر الغرام',
+      stocks: 'الأسهم',
+      stockName: 'اسم السهم',
+      stockShares: 'عدد الأسهم',
+      stockPrice: 'سعر السهم',
+      addStock: '+ إضافة سهم',
+      remove: 'حذف',
+      fitr: 'زكاة الفطر (عدد الأفراد)',
+      hijri: 'تاريخ بداية الحول الهجري',
+      calc: 'احسب الزكاة',
+      result: 'نتيجة حساب الزكاة',
+      cashR: 'النقد',
+      goldR: 'الذهب/الفضة',
+      stocksR: 'الأسهم',
+      businessR: 'البضائع التجارية',
+      fitrR: 'زكاة الفطر',
+      total: 'الإجمالي',
+      required: 'مطلوب',
+      mustBePositive: 'يجب أن يكون رقماً موجباً',
+    },
+    en: {
+      title: 'Zakat Calculator',
+      cash: 'Cash (local currency)',
+      business: 'Business Goods (inventory value)',
+      goldWeight: 'Gold/Silver Weight (g)',
+      goldPrice: 'Gold/Silver Price per gram',
+      stocks: 'Stocks',
+      stockName: 'Stock name',
+      stockShares: 'Shares',
+      stockPrice: 'Price',
+      addStock: '+ Add Stock',
+      remove: 'Remove',
+      fitr: 'Zakat al-Fitr (family members)',
+      hijri: 'Hijri Start Date',
+      calc: 'Calculate Zakat',
+      result: 'Zakat Calculation Result',
+      cashR: 'Cash',
+      goldR: 'Gold/Silver',
+      stocksR: 'Stocks',
+      businessR: 'Business Goods',
+      fitrR: 'Zakat al-Fitr',
+      total: 'Total',
+      required: 'Required',
+      mustBePositive: 'Must be positive',
+    },
+  }[lang];
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>, idx?: number) => {
     const { name, value } = e.target;
@@ -77,16 +133,20 @@ export default function Calculator() {
 
   const validate = () => {
     const newErrors: CalculatorErrors = {};
-    if (!inputs.cash || !validatePositiveNumber(inputs.cash)) newErrors.cash = 'Required, must be positive';
-    if (!inputs.goldWeight || !validatePositiveNumber(inputs.goldWeight)) newErrors.goldWeight = 'Required, must be positive';
-    if (!inputs.goldPrice || !validatePositiveNumber(inputs.goldPrice)) newErrors.goldPrice = 'Required, must be positive';
-    if (!inputs.business || !validatePositiveNumber(inputs.business)) newErrors.business = 'Required, must be positive';
-    if (!inputs.fitr || !validatePositiveNumber(inputs.fitr)) newErrors.fitr = 'Required, must be positive';
-    if (!inputs.hijri) newErrors.hijri = 'Required';
+    // Only hijri is required
+    if (!inputs.hijri) newErrors.hijri = t.required;
+    // If provided, must be positive
+    if (inputs.cash && !validatePositiveNumber(inputs.cash)) newErrors.cash = t.mustBePositive;
+    if (inputs.goldWeight && !validatePositiveNumber(inputs.goldWeight)) newErrors.goldWeight = t.mustBePositive;
+    if (inputs.goldPrice && !validatePositiveNumber(inputs.goldPrice)) newErrors.goldPrice = t.mustBePositive;
+    if (inputs.business && !validatePositiveNumber(inputs.business)) newErrors.business = t.mustBePositive;
+    if (inputs.fitr && !validatePositiveNumber(inputs.fitr)) newErrors.fitr = t.mustBePositive;
     inputs.stocks.forEach((s, i) => {
-      if (!s.name) newErrors[`stockName${i}`] = 'Required';
-      if (!s.shares || !validatePositiveNumber(s.shares)) newErrors[`stockShares${i}`] = 'Required, must be positive';
-      if (!s.price || !validatePositiveNumber(s.price)) newErrors[`stockPrice${i}`] = 'Required, must be positive';
+      if (s.name || s.shares || s.price) {
+        if (!s.name) newErrors[`stockName${i}`] = t.required;
+        if (!s.shares || !validatePositiveNumber(s.shares)) newErrors[`stockShares${i}`] = t.mustBePositive;
+        if (!s.price || !validatePositiveNumber(s.price)) newErrors[`stockPrice${i}`] = t.mustBePositive;
+      }
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -94,82 +154,93 @@ export default function Calculator() {
 
   const calculate = () => {
     if (!validate()) return;
-    const cash = Number(inputs.cash) * 0.025;
-    const gold = Number(inputs.goldWeight) * Number(inputs.goldPrice) * 0.025;
-    const stocks = inputs.stocks.reduce((sum, s) => sum + Number(s.shares) * Number(s.price) * 0.025, 0);
-    const business = Number(inputs.business) * 0.025;
-    const fitr = Number(inputs.fitr) * 25; // Assume 25 per person
-    const total = cash + gold + stocks + business + fitr;
-    setResult({ cash, gold, stocks, business, fitr, total });
+    const cash = Number(inputs.cash) || 0;
+    const goldWeight = Number(inputs.goldWeight) || 0;
+    const goldPrice = Number(inputs.goldPrice) || 0;
+    const gold = goldWeight * goldPrice * 0.025;
+    const stocks = inputs.stocks.reduce((sum, s) => {
+      if (s.name && s.shares && s.price) {
+        return sum + Number(s.shares) * Number(s.price) * 0.025;
+      }
+      return sum;
+    }, 0);
+    const business = Number(inputs.business) || 0;
+    const fitr = Number(inputs.fitr) ? Number(inputs.fitr) * 25 : 0;
+    const total = cash * 0.025 + gold + stocks + business * 0.025 + fitr;
+    setResult({ cash: cash * 0.025, gold, stocks, business: business * 0.025, fitr, total });
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-semibold mb-4 text-center">Zakat Calculator</h2>
-      <form className="space-y-4" onSubmit={e => { e.preventDefault(); calculate(); }}>
-        <div>
-          <label htmlFor="cash" className="block font-medium">Cash (local currency)</label>
-          <input id="cash" name="cash" type="number" min="0" className="input" value={inputs.cash} onChange={handleInput} />
-          {errors.cash && <div className="text-red-500 text-sm">{errors.cash}</div>}
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+    <div className="max-w-2xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-xl mt-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <h2 className="text-3xl font-extrabold mb-6 text-center text-blue-700 tracking-tight drop-shadow">{t.title}</h2>
+      <form className="space-y-6" onSubmit={e => { e.preventDefault(); calculate(); }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="goldWeight" className="block font-medium">Gold/Silver Weight (g)</label>
-            <input id="goldWeight" name="goldWeight" type="number" min="0" className="input" value={inputs.goldWeight} onChange={handleInput} />
-            {errors.goldWeight && <div className="text-red-500 text-sm">{errors.goldWeight}</div>}
+            <label htmlFor="cash" className="block font-semibold text-gray-700 mb-1">{t.cash}</label>
+            <input id="cash" name="cash" type="number" min="0" className="input w-full border-2 border-blue-200 focus:border-blue-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.cash} onChange={handleInput} placeholder={lang === 'ar' ? 'مثال: ١٠٠٠٠' : 'e.g. 10000'} />
+            {errors.cash && <div className="text-red-500 text-xs mt-1">{errors.cash}</div>}
           </div>
           <div>
-            <label htmlFor="goldPrice" className="block font-medium">Gold/Silver Price per gram</label>
-            <input id="goldPrice" name="goldPrice" type="number" min="0" className="input" value={inputs.goldPrice} onChange={handleInput} />
-            {errors.goldPrice && <div className="text-red-500 text-sm">{errors.goldPrice}</div>}
+            <label htmlFor="business" className="block font-semibold text-gray-700 mb-1">{t.business}</label>
+            <input id="business" name="business" type="number" min="0" className="input w-full border-2 border-blue-200 focus:border-blue-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.business} onChange={handleInput} placeholder={lang === 'ar' ? 'مثال: ٥٠٠٠' : 'e.g. 5000'} />
+            {errors.business && <div className="text-red-500 text-xs mt-1">{errors.business}</div>}
           </div>
         </div>
-        <div>
-          <label className="block font-medium mb-1" htmlFor="stock-name-0">Stocks</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="goldWeight" className="block font-semibold text-gray-700 mb-1">{t.goldWeight}</label>
+            <input id="goldWeight" name="goldWeight" type="number" min="0" className="input w-full border-2 border-yellow-200 focus:border-yellow-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.goldWeight} onChange={handleInput} placeholder={lang === 'ar' ? 'مثال: ٨٥' : 'e.g. 85'} />
+            {errors.goldWeight && <div className="text-red-500 text-xs mt-1">{errors.goldWeight}</div>}
+          </div>
+          <div>
+            <label htmlFor="goldPrice" className="block font-semibold text-gray-700 mb-1">{t.goldPrice}</label>
+            <input id="goldPrice" name="goldPrice" type="number" min="0" className="input w-full border-2 border-yellow-200 focus:border-yellow-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.goldPrice} onChange={handleInput} placeholder={lang === 'ar' ? 'مثال: ٣٠٠' : 'e.g. 300'} />
+            {errors.goldPrice && <div className="text-red-500 text-xs mt-1">{errors.goldPrice}</div>}
+          </div>
+        </div>
+        <div className="bg-white/80 rounded-xl p-4 shadow-inner">
+          <label className="block font-semibold text-gray-700 mb-2" htmlFor="stock-name-0">{t.stocks}</label>
           {inputs.stocks.map((s, i) => (
-            <div key={s.name + i + s.shares + s.price} className="flex gap-2 mb-2">
-              <input id={`stock-name-${i}`} name="stock-name" placeholder="Stock name" className="input flex-1" value={s.name} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-name' } }, i)} />
-              <input id={`stock-shares-${i}`} name="stock-shares" type="number" min="0" placeholder="Shares" className="input w-24" value={s.shares} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-shares' } }, i)} />
-              <input id={`stock-price-${i}`} name="stock-price" type="number" min="0" placeholder="Price" className="input w-24" value={s.price} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-price' } }, i)} />
-              {inputs.stocks.length > 1 && <button type="button" className="text-red-500" onClick={() => removeStock(i)}>✕</button>}
+            <div key={s.name + i + s.shares + s.price} className="flex flex-col md:flex-row gap-2 mb-2 items-center">
+              <input id={`stock-name-${i}`} name="stock-name" placeholder={t.stockName} className="input flex-1 border-2 border-blue-200 focus:border-blue-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={s.name} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-name' } }, i)} />
+              <input id={`stock-shares-${i}`} name="stock-shares" type="number" min="0" placeholder={t.stockShares} className="input w-24 border-2 border-blue-200 focus:border-blue-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={s.shares} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-shares' } }, i)} />
+              <input id={`stock-price-${i}`} name="stock-price" type="number" min="0" placeholder={t.stockPrice} className="input w-24 border-2 border-blue-200 focus:border-blue-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={s.price} onChange={e => handleInput({ ...e, target: { ...e.target, name: 'stock-price' } }, i)} />
+              {inputs.stocks.length > 1 && <button type="button" className="text-red-500 text-lg px-2" onClick={() => removeStock(i)} title={t.remove}>✕</button>}
             </div>
           ))}
-          <button type="button" className="text-blue-600 underline text-sm" onClick={addStock}>+ Add Stock</button>
+          <button type="button" className="text-blue-600 underline text-sm mt-1" onClick={addStock}>{t.addStock}</button>
           {inputs.stocks.map((_, i) => (
             <div key={i + 'err'}>
-              {errors[`stockName${i}`] && <div className="text-red-500 text-sm">{errors[`stockName${i}`]}</div>}
-              {errors[`stockShares${i}`] && <div className="text-red-500 text-sm">{errors[`stockShares${i}`]}</div>}
-              {errors[`stockPrice${i}`] && <div className="text-red-500 text-sm">{errors[`stockPrice${i}`]}</div>}
+              {errors[`stockName${i}`] && <div className="text-red-500 text-xs">{errors[`stockName${i}`]}</div>}
+              {errors[`stockShares${i}`] && <div className="text-red-500 text-xs">{errors[`stockShares${i}`]}</div>}
+              {errors[`stockPrice${i}`] && <div className="text-red-500 text-xs">{errors[`stockPrice${i}`]}</div>}
             </div>
           ))}
         </div>
-        <div>
-          <label htmlFor="business" className="block font-medium">Business Goods (inventory value)</label>
-          <input id="business" name="business" type="number" min="0" className="input" value={inputs.business} onChange={handleInput} />
-          {errors.business && <div className="text-red-500 text-sm">{errors.business}</div>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="fitr" className="block font-semibold text-gray-700 mb-1">{t.fitr}</label>
+            <input id="fitr" name="fitr" type="number" min="0" className="input w-full border-2 border-green-200 focus:border-green-500 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.fitr} onChange={handleInput} placeholder={lang === 'ar' ? 'مثال: ٤' : 'e.g. 4'} />
+            {errors.fitr && <div className="text-red-500 text-xs mt-1">{errors.fitr}</div>}
+          </div>
+          <div>
+            <label htmlFor="hijri" className="block font-semibold text-gray-700 mb-1">{t.hijri}</label>
+            <input id="hijri" name="hijri" type="date" className="input w-full border-2 border-gray-200 focus:border-blue-400 rounded-lg px-3 py-2 bg-white shadow-sm" value={inputs.hijri} onChange={handleInput} />
+            {errors.hijri && <div className="text-red-500 text-xs mt-1">{errors.hijri}</div>}
+          </div>
         </div>
-        <div>
-          <label htmlFor="fitr" className="block font-medium">Zakat al-Fitr (family members)</label>
-          <input id="fitr" name="fitr" type="number" min="0" className="input" value={inputs.fitr} onChange={handleInput} />
-          {errors.fitr && <div className="text-red-500 text-sm">{errors.fitr}</div>}
-        </div>
-        <div>
-          <label htmlFor="hijri" className="block font-medium">Hijri Start Date</label>
-          <input id="hijri" name="hijri" type="date" className="input" value={inputs.hijri} onChange={handleInput} />
-          {errors.hijri && <div className="text-red-500 text-sm">{errors.hijri}</div>}
-        </div>
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">Calculate Zakat</button>
+        <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white py-3 rounded-xl font-bold text-lg shadow hover:from-blue-700 hover:to-blue-500 transition">{t.calc}</button>
       </form>
       {result && (
-        <div className="mt-6 bg-blue-50 p-4 rounded">
-          <h3 className="text-lg font-bold mb-2">Zakat Calculation Result</h3>
-          <ul className="space-y-1">
-            <li>Cash: <span className="font-mono">{result.cash.toFixed(2)}</span></li>
-            <li>Gold/Silver: <span className="font-mono">{result.gold.toFixed(2)}</span></li>
-            <li>Stocks: <span className="font-mono">{result.stocks.toFixed(2)}</span></li>
-            <li>Business Goods: <span className="font-mono">{result.business.toFixed(2)}</span></li>
-            <li>Zakat al-Fitr: <span className="font-mono">{result.fitr.toFixed(2)}</span></li>
-            <li className="font-bold mt-2">Total: <span className="font-mono text-blue-700">{result.total.toFixed(2)}</span></li>
+        <div className="mt-8 bg-white/90 p-6 rounded-xl shadow-lg border-t-4 border-blue-400 animate-fade-in">
+          <h3 className="text-xl font-bold mb-4 text-blue-700">{t.result}</h3>
+          <ul className="space-y-2 text-lg">
+            <li className="flex justify-between"><span>{t.cashR}:</span> <span className="font-mono">{result.cash.toFixed(2)}</span></li>
+            <li className="flex justify-between"><span>{t.goldR}:</span> <span className="font-mono">{result.gold.toFixed(2)}</span></li>
+            <li className="flex justify-between"><span>{t.stocksR}:</span> <span className="font-mono">{result.stocks.toFixed(2)}</span></li>
+            <li className="flex justify-between"><span>{t.businessR}:</span> <span className="font-mono">{result.business.toFixed(2)}</span></li>
+            <li className="flex justify-between"><span>{t.fitrR}:</span> <span className="font-mono">{result.fitr.toFixed(2)}</span></li>
+            <li className="font-bold flex justify-between border-t pt-2 mt-2 text-blue-700 text-xl"><span>{t.total}:</span> <span className="font-mono">{result.total.toFixed(2)}</span></li>
           </ul>
         </div>
       )}
