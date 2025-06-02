@@ -12,6 +12,9 @@ export interface ZakatRow {
   type: string;
   value: number;
   name?: string;
+  dueDate: string; // ISO date string for zakat due date
+  goldPrice?: number; // price used for this row (if gold/silver)
+  fitrValue?: number; // value used for this row (if fitr)
 }
 
 export interface ZakatResult {

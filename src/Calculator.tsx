@@ -27,7 +27,17 @@ export default function Calculator() {
 
   // Add row
   const handleAdd = (row: ZakatRow) => {
-    setRows(prev => [...prev, row]);
+    // Attach the current gold/fitr price used for this row, but never null (only number or undefined)
+    const goldPriceToUse = manualGoldPrice ? Number(manualGoldPrice) : goldPrice ?? undefined;
+    const fitrValueToUse = manualFitrValue ? Number(manualFitrValue) : fitrValue ?? undefined;
+    setRows(prev => [
+      ...prev,
+      {
+        ...row,
+        goldPrice: goldPriceToUse ?? undefined,
+        fitrValue: fitrValueToUse ?? undefined,
+      },
+    ]);
     toast.success(lang === 'ar' ? 'تمت الإضافة' : 'Added');
   };
   // Delete row
@@ -35,6 +45,12 @@ export default function Calculator() {
     setRows(rows.filter(r => r.id !== id));
     toast.error(lang === 'ar' ? 'تم الحذف' : 'Deleted');
   };
+
+  // Manual override state for gold/fitr price
+  const [manualGoldPrice, setManualGoldPrice] = useState<string>('');
+  const [manualFitrValue, setManualFitrValue] = useState<string>('');
+
+  // Pass manual values to ZakatInputForm
 
   // Calculate zakat result
   useEffect(() => {
@@ -46,14 +62,17 @@ export default function Calculator() {
     const breakdown: { label: string; value: number }[] = [];
     rows.forEach(row => {
       let zakat = 0;
-      if (row.type === 'gold' && goldPrice) {
-        zakat = row.value * goldPrice * 0.025;
+      // Use the price attached to the row if present, else fallback to latest
+      const goldPriceForRow = row.goldPrice ?? goldPrice ?? 0;
+      const fitrValueForRow = row.fitrValue ?? fitrValue ?? 0;
+      if (row.type === 'gold' && goldPriceForRow) {
+        zakat = row.value * goldPriceForRow * 0.025;
         breakdown.push({ label: lang === 'ar' ? 'ذهب' : 'Gold', value: zakat });
-      } else if (row.type === 'silver' && goldPrice) {
-        zakat = row.value * goldPrice * 0.025;
+      } else if (row.type === 'silver' && goldPriceForRow) {
+        zakat = row.value * goldPriceForRow * 0.025;
         breakdown.push({ label: lang === 'ar' ? 'فضة' : 'Silver', value: zakat });
-      } else if (row.type === 'fitr' && fitrValue) {
-        zakat = row.value * fitrValue;
+      } else if (row.type === 'fitr' && fitrValueForRow) {
+        zakat = row.value * fitrValueForRow;
         breakdown.push({ label: lang === 'ar' ? 'فطر' : 'Fitr', value: zakat });
       } else if (row.type === 'cash' || row.type === 'business' || row.type === 'stocks') {
         zakat = row.value * 0.025;
@@ -63,6 +82,12 @@ export default function Calculator() {
     });
     setResult({ total, breakdown });
   }, [rows, goldPrice, fitrValue, lang]);
+
+  // Auto-fetch gold/fitr price on mount
+  useEffect(() => {
+    if (!goldPrice) fetchGoldPrice();
+    if (!fitrValue) fetchFitrValue();
+  }, [fetchGoldPrice, fetchFitrValue, goldPrice, fitrValue]);
 
   // Save rows and result to localStorage on change
   useEffect(() => {
@@ -92,6 +117,10 @@ export default function Calculator() {
         onAdd={handleAdd}
         errors={errors}
         setErrors={setErrors}
+        manualGoldPrice={manualGoldPrice}
+        setManualGoldPrice={setManualGoldPrice}
+        manualFitrValue={manualFitrValue}
+        setManualFitrValue={setManualFitrValue}
       />
       {rows.length > 0 && (
         <div className="mb-6">
