@@ -10,6 +10,17 @@
       "reminder": "التذكير",
       "distribution": "التوزيع",
       "lang": "English"
+    },
+    "reminderLabels": {
+      "title": "تذكير الزكاة",
+      "hijri": "تاريخ بداية الحول:",
+      "notSet": "غير محدد",
+      "edit": "تعديل",
+      "save": "حفظ",
+      "nextDue": "تاريخ الاستحقاق القادم:",
+      "days": "يوم متبقي حتى استحقاق الزكاة",
+      "due": "الزكاة مستحقة!",
+      "paid": "تم السداد"
     }
   },
   "en": {
@@ -23,6 +34,17 @@
       "reminder": "Reminder",
       "distribution": "Distribution",
       "lang": "العربية"
+    },
+    "reminderLabels": {
+      "title": "Zakat Reminder",
+      "hijri": "Hijri Start Date:",
+      "notSet": "Not set",
+      "edit": "Edit",
+      "save": "Save",
+      "nextDue": "Next Due Date:",
+      "days": "days remaining until zakat due",
+      "due": "Zakat is due!",
+      "paid": "Mark as Paid"
     }
   }
 }

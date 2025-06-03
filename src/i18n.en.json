@@ -1,0 +1,24 @@
+{
+  "home": {
+    "title": "Zakat Reminder",
+    "desc": "Zakat Reminder helps you calculate your zakat, set reminders for your zakat due date, and find trusted organizations for zakat distribution. Easily manage your annual zakat with accurate calculations, countdowns, and donation options—all in one place."
+  },
+  "navbar": {
+    "home": "Home",
+    "calculator": "Calculator",
+    "reminder": "Reminder",
+    "distribution": "Distribution",
+    "lang": "العربية"
+  },
+  "reminderLabels": {
+    "title": "Zakat Reminder",
+    "hijri": "Hijri Start Date:",
+    "notSet": "Not set",
+    "edit": "Edit",
+    "save": "Save",
+    "nextDue": "Next Due Date:",
+    "days": "days remaining until zakat due",
+    "due": "Zakat is due!",
+    "paid": "Mark as Paid"
+  }
+}

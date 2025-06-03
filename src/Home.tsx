@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLang } from './lang';
 import ZakatTable from './ZakatTable';
-import type { ZakatRow } from './ZakatTable';
+import type { ZakatRow } from './types';
 
 export default function Home() {
   const lang = useLang();

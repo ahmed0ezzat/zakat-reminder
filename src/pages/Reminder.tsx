@@ -1,1 +1,5 @@
-// ...existing code from Reminder.tsx...
+import Reminder from '../Reminder';
+
+export default function ReminderPage() {
+  return <Reminder />;
+}

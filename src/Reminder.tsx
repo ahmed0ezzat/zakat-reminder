@@ -1,4 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useLang } from './lang';
+import i18nEn from './i18n.en.json';
+import i18nAr from './i18n.ar.json';
+
+interface ReminderLabels {
+  title: string;
+  hijri: string;
+  notSet: string;
+  edit: string;
+  save: string;
+  nextDue: string;
+  days: string;
+  due: string;
+  paid: string;
+}
 
 function getNextHijriYear(date: string) {
   const d = new Date(date);
@@ -11,6 +26,9 @@ function daysBetween(date1: Date, date2: Date) {
 }
 
 export default function Reminder() {
+  const lang = useLang();
+  const i18n = lang === 'ar' ? (i18nAr as { reminderLabels: ReminderLabels }) : (i18nEn as { reminderLabels: ReminderLabels });
+  const t = i18n.reminderLabels;
   const [hijri, setHijri] = useState(() => localStorage.getItem('hijri') || '');
   const [edit, setEdit] = useState(false);
   const [paid, setPaid] = useState(false);
@@ -34,9 +52,9 @@ export default function Reminder() {
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded shadow text-center">
-      <h2 className="text-2xl font-semibold mb-4">Zakat Reminder</h2>
+      <h2 className="text-2xl font-semibold mb-4">{t.title}</h2>
       <div className="mb-4">
-        <div className="font-medium">Hijri Start Date:</div>
+        <div className="font-medium">{t.hijri}</div>
         {edit ? (
           <input
             type="date"
@@ -45,33 +63,33 @@ export default function Reminder() {
             onChange={e => setHijri(e.target.value)}
           />
         ) : (
-          <span className="ml-2">{hijri || 'Not set'}</span>
+          <span className="ml-2">{hijri || t.notSet}</span>
         )}
         <button
           className="ml-3 text-blue-600 underline text-sm"
           onClick={() => setEdit(e => !e)}
         >
-          {edit ? 'Save' : 'Edit'}
+          {edit ? t.save : t.edit}
         </button>
       </div>
       {nextDue && (
         <div className="mb-4">
-          <div className="font-medium">Next Due Date:</div>
+          <div className="font-medium">{t.nextDue}</div>
           <span>{nextDue.toISOString().slice(0, 10)}</span>
         </div>
       )}
       {daysLeft !== null && (
         <div className="mb-4 text-lg font-bold text-blue-700">
           {daysLeft > 0
-            ? `${daysLeft} days remaining until zakat due`
-            : 'Zakat is due!'}
+            ? `${daysLeft} ${t.days}`
+            : t.due}
         </div>
       )}
       <button
         className="bg-green-600 text-white px-4 py-2 rounded font-semibold hover:bg-green-700 transition"
         onClick={handlePaid}
       >
-        Mark as Paid
+        {t.paid}
       </button>
     </div>
   );
