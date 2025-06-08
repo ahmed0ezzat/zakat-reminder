@@ -12,6 +12,7 @@ interface ZakatTableProps {
 
 const getZakatTypeLabel = (t: typeof ZAKAT_TYPES[number], lang: string) => lang === 'ar' ? t.ar : t.en;
 
+// TODO: This component is deprecated. Please use ZakatSummaryTable instead for all summary and result displays.
 export default function ZakatTable({ rows, onEdit, onDelete, editable }: Readonly<ZakatTableProps>) {
   const lang = useLang();
   const [editId, setEditId] = useState<string | null>(null);
@@ -50,66 +51,75 @@ export default function ZakatTable({ rows, onEdit, onDelete, editable }: Readonl
       <thead>
         <tr>
           <th className="py-2">{lang === 'ar' ? 'النوع' : 'Type'}</th>
-          <th className="py-2">{lang === 'ar' ? 'الاسم' : 'Name'}</th>
+          <th className="py-2">{lang === 'ar' ? 'التاريخ المستحق' : 'Due Date'}</th>
           <th className="py-2">{lang === 'ar' ? 'القيمة' : 'Value'}</th>
           {editable && <th className="py-2">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>}
         </tr>
       </thead>
       <tbody>
-        {rows.map(row => (
-          <tr key={row.id} className="border-b hover:bg-gray-50 transition-colors">
-            <td>{(() => {
-              const t = ZAKAT_TYPES.find(t => t.key === row.type);
-              return t ? getZakatTypeLabel(t, lang) : row.type;
-            })()}</td>
-            <td>{row.type === 'stocks' ? row.name : '-'}</td>
-            <td>
-              {editId === row.id ? (
-                <input
-                  className="input w-24"
-                  type="number"
-                  min="0"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                />
-              ) : (
-                row.value
-              )}
-            </td>
-            <td>
-              {editId === row.id ? (
-                <>
-                  {row.type === 'stocks' && (
-                    <input
-                      className="input w-24 mr-2"
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      placeholder={lang === 'ar' ? 'اسم السهم' : 'Stock name'}
-                    />
+        {rows.map(row => {
+          // Try to infer paid status from row if available, otherwise always show as unpaid
+          const isPaid = typeof row === 'object' && 'paid' in row && (row as { paid?: boolean }).paid === true;
+          return (
+            <tr
+              key={row.id}
+              className={`hover:bg-gray-50 transition-colors ${isPaid ? 'opacity-60 line-through bg-gray-100' : 'bg-green-50 border-l-4 border-green-400'}`}
+            >
+              <td>{(() => {
+                const t = ZAKAT_TYPES.find(t => t.key === row.type);
+                return t ? getZakatTypeLabel(t, lang) : row.type;
+              })()}</td>
+              <td>{row.dueDate ? row.dueDate : '-'}</td>
+              <td>
+                {editId === row.id ? (
+                  <input
+                    className="input w-24"
+                    type="number"
+                    min="0"
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                  />
+                ) : (
+                  row.value
+                )}
+              </td>
+              {editable && (
+                <td>
+                  {editId === row.id ? (
+                    <>
+                      {row.type === 'stocks' && (
+                        <input
+                          className="input w-24 mr-2"
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          placeholder={lang === 'ar' ? 'اسم السهم' : 'Stock name'}
+                        />
+                      )}
+                      <button className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-green-500 hover:bg-blue-100 hover:text-green-600 transition-colors cursor-pointer mr-2" onClick={() => handleSave(row)}>{lang === 'ar' ? 'حفظ' : 'Save'}</button>
+                      <button className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-gray-500 hover:bg-blue-100 hover:text-gray-600 transition-colors cursor-pointer mr-2" onClick={() => { setEditId(null); setEditValue(''); setEditName(''); setError(null); }}>{lang === 'ar' ? 'إلغاء' : 'Cancel'}</button>
+                      {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-blue-500 hover:bg-blue-100 hover:text-blue-600 transition-colors cursor-pointer mr-2"
+                        onClick={() => handleEditClick(row)}
+                      >
+                        {lang === 'ar' ? 'تعديل' : 'Edit'}
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-red-500 hover:bg-blue-100 hover:text-blue-600 transition-colors cursor-pointer mr-2"
+                        onClick={() => onDelete && onDelete(row.id)}
+                      >
+                        {lang === 'ar' ? 'حذف' : 'Delete'}
+                      </button>
+                    </>
                   )}
-                  <button className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-green-500 hover:bg-blue-100 hover:text-green-600 transition-colors cursor-pointer mr-2" onClick={() => handleSave(row)}>{lang === 'ar' ? 'حفظ' : 'Save'}</button>
-                  <button className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-gray-500 hover:bg-blue-100 hover:text-gray-600 transition-colors cursor-pointer mr-2" onClick={() => { setEditId(null); setEditValue(''); setEditName(''); setError(null); }}>{lang === 'ar' ? 'إلغاء' : 'Cancel'}</button>
-                  {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
-                </>
-              ) : (
-                <>
-                  <button
-                    className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-blue-500 hover:bg-blue-100 hover:text-blue-600 transition-colors cursor-pointer mr-2"
-                    onClick={() => handleEditClick(row)}
-                  >
-                    {lang === 'ar' ? 'تعديل' : 'Edit'}
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-sm bg-gray-50 p-2 rounded-lg text-red-500 hover:bg-blue-100 hover:text-blue-600 transition-colors cursor-pointer mr-2"
-                    onClick={() => onDelete && onDelete(row.id)}
-                  >
-                    {lang === 'ar' ? 'حذف' : 'Delete'}
-                  </button>
-                </>
+                </td>
               )}
-            </td>
-          </tr>
-        ))}
+            </tr>
+          );
+        })}
         {/* Always show add row for edit/delete, even if not editable */}
       </tbody>
     </table>

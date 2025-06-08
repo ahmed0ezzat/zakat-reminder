@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import { useLang } from './lang';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ZakatTable from './ZakatTable';
+import ZakatSummaryTable from './components/tables/ZakatSummaryTable';
 import { type ZakatRow, type ZakatResult, ZAKAT_TYPES } from './types';
 import useGoldPrice from './hooks/useGoldPrice';
 import useFitrValue from './hooks/useFitrValue';
 import ZakatInputForm from './ZakatInputForm';
-import ZakatResultCard from './ZakatResultCard';
 
 export default function Calculator() {
   const lang = useLang();
@@ -22,14 +21,14 @@ export default function Calculator() {
   const [errors, setErrors] = useState<string | null>(null);
 
   // Custom hooks for gold/fitr
-  const { goldPrice, loadingGold, fetchGoldPrice } = useGoldPrice(lang);
-  const { fitrValue, loadingFitr, fetchFitrValue } = useFitrValue(lang);
+  const { goldPrice, fetchGoldPrice } = useGoldPrice(lang);
+  const { fitrValue, fetchFitrValue } = useFitrValue(lang);
 
   // Add row
   const handleAdd = (row: ZakatRow) => {
     // Attach the current gold/fitr price used for this row, but never null (only number or undefined)
-    const goldPriceToUse = manualGoldPrice ? Number(manualGoldPrice) : goldPrice ?? undefined;
-    const fitrValueToUse = manualFitrValue ? Number(manualFitrValue) : fitrValue ?? undefined;
+    const goldPriceToUse = goldPrice ?? undefined;
+    const fitrValueToUse = fitrValue ?? undefined;
     setRows(prev => [
       ...prev,
       {
@@ -45,12 +44,6 @@ export default function Calculator() {
     setRows(rows.filter(r => r.id !== id));
     toast.error(lang === 'ar' ? 'تم الحذف' : 'Deleted');
   };
-
-  // Manual override state for gold/fitr price
-  const [manualGoldPrice, setManualGoldPrice] = useState<string>('');
-  const [manualFitrValue, setManualFitrValue] = useState<string>('');
-
-  // Pass manual values to ZakatInputForm
 
   // Calculate zakat result
   useEffect(() => {
@@ -102,32 +95,20 @@ export default function Calculator() {
   }, [result]);
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-xl mt-8">
+    <div className="max-w-[800px] mx-auto p-6 bg-white rounded-2xl shadow-xl mt-8">
       <ToastContainer position={lang === 'ar' ? 'top-left' : 'top-right'} rtl={lang === 'ar'} />
       <h2 className="text-2xl font-bold mb-4 text-blue-700 text-center">{lang === 'ar' ? 'حاسبة الزكاة الذكية' : 'Smart Zakat Calculator'}</h2>
       <ZakatInputForm
         lang={lang}
         zakatTypes={ZAKAT_TYPES}
-        goldPrice={goldPrice}
-        loadingGold={loadingGold}
-        fetchGoldPrice={fetchGoldPrice}
-        fitrValue={fitrValue}
-        loadingFitr={loadingFitr}
-        fetchFitrValue={fetchFitrValue}
-        onAdd={handleAdd}
+        goldPrice={goldPrice ?? undefined}
+        fitrValue={fitrValue ?? undefined}
         errors={errors}
         setErrors={setErrors}
-        manualGoldPrice={manualGoldPrice}
-        setManualGoldPrice={setManualGoldPrice}
-        manualFitrValue={manualFitrValue}
-        setManualFitrValue={setManualFitrValue}
       />
-      {rows.length > 0 && (
-        <div className="mb-6">
-          <ZakatTable rows={rows} onEdit={() => {}} onDelete={handleDelete} editable={false} />
-        </div>
+      {rows.length > 0 && result && (
+        <ZakatSummaryTable lang={lang} rows={rows} result={result} />
       )}
-      {result && <ZakatResultCard lang={lang} result={result} />}
     </div>
   );
 }

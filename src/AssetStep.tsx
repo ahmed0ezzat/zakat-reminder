@@ -56,10 +56,10 @@ const AssetStep: React.FC<AssetStepProps> = ({
           <input className="input w-full" value={inputName} onChange={e => setInputName(e.target.value)} placeholder={lang === 'ar' ? 'اسم السهم' : 'Stock name'} />
         </div>
       )}
-      <div className="flex-1">
+      {/* <div className="flex-1">
         <label className="block font-semibold mb-1">{lang === 'ar' ? 'القيمة' : 'Value'}</label>
         <input className="input w-full" type="number" min="0" value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder={lang === 'ar' ? 'أدخل القيمة' : 'Enter value'} />
-      </div>
+      </div> */}
       <button type="button" className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 transition shadow" onClick={handleAdd}>{lang === 'ar' ? 'إضافة' : 'Add'}</button>
     </div>
     {/* Gold price and Fitr settings */}
@@ -135,6 +135,7 @@ const AssetStep: React.FC<AssetStepProps> = ({
     </div>
     {errors.input && <div className="text-red-500 text-sm mb-2">{errors.input}</div>}
     <div className="mb-6 overflow-x-auto">
+      {/* TODO: This component is deprecated. Please use ZakatSummaryTable instead for all summary and result displays. */}
       <ZakatTable rows={rows} onEdit={handleEdit} onDelete={handleDelete} editable />
     </div>
     <div className="flex justify-end">
